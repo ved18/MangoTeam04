@@ -49,6 +49,7 @@ import com.serotonin.web.i18n.LocalizableMessage;
 public class MetaPointLocatorRT extends PointLocatorRT implements DataPointListener {
     private static final ThreadLocal<List<Integer>> threadLocal = new ThreadLocal<List<Integer>>();
     private static final int MAX_RECURSION = 10;
+    private static final int SEC_TO_MILLI_MULTIPLIER = 1000;
 
     final Boolean LOCK = new Boolean(false);
 
@@ -187,7 +188,7 @@ public class MetaPointLocatorRT extends PointLocatorRT implements DataPointListe
         @Override
         public void run(long fireTime) {
             // Execute the update
-            execute(fireTime - vo.getExecutionDelaySeconds() * 1000, new ArrayList<Integer>());
+            execute(fireTime - vo.getExecutionDelaySeconds() * SEC_TO_MILLI_MULTIPLIER, new ArrayList<Integer>());
 
             // Schedule the next timeout.
             synchronized (LOCK) {
@@ -211,7 +212,7 @@ public class MetaPointLocatorRT extends PointLocatorRT implements DataPointListe
         }
         else
             timeout = DateUtils.next(time, updateEventId);
-        return timeout + vo.getExecutionDelaySeconds() * 1000;
+        return timeout + vo.getExecutionDelaySeconds() * SEC_TO_MILLI_MULTIPLIER;
     }
 
     class ExecutionDelayTimeout extends TimerTask {
@@ -219,7 +220,7 @@ public class MetaPointLocatorRT extends PointLocatorRT implements DataPointListe
         private final List<Integer> sourceIds;
 
         public ExecutionDelayTimeout(long updateTime, List<Integer> sourceIds) {
-            super(new OneTimeTrigger(new Date(updateTime + vo.getExecutionDelaySeconds() * 1000)));
+            super(new OneTimeTrigger(new Date(updateTime + vo.getExecutionDelaySeconds() * SEC_TO_MILLI_MULTIPLIER)));
             this.updateTime = updateTime;
             this.sourceIds = sourceIds;
             timer.schedule(this);
