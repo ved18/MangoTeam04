@@ -39,7 +39,7 @@ import com.serotonin.web.i18n.LocalizableMessage;
 
 /**
  * @author Matthew Lohbihler
- * 
+ *
  */
 public class ScheduledEventRT extends SimpleEventDetector implements ModelTimeoutClient<Boolean> {
     private final ScheduledEventVO vo;
@@ -129,32 +129,8 @@ public class ScheduledEventRT extends SimpleEventDetector implements ModelTimeou
 
     private static final String[] weekdays = { "", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" };
 
-    public TimerTrigger createTrigger(boolean activeTrigger) {
-        if (!activeTrigger && !vo.isReturnToNormal())
-            return null;
 
-        if (vo.getScheduleType() == ScheduledEventVO.TYPE_CRON) {
-            try {
-                if (activeTrigger)
-                    return new CronTimerTrigger(vo.getActiveCron());
-                return new CronTimerTrigger(vo.getInactiveCron());
-            }
-            catch (ParseException e) {
-                // Should never happen, so wrap and rethrow
-                throw new ShouldNeverHappenException(e);
-            }
-        }
-
-        if (vo.getScheduleType() == ScheduledEventVO.TYPE_ONCE) {
-            DateTime dt;
-            if (activeTrigger)
-                dt = new DateTime(vo.getActiveYear(), vo.getActiveMonth(), vo.getActiveDay(), vo.getActiveHour(),
-                        vo.getActiveMinute(), vo.getActiveSecond(), 0);
-            else
-                dt = new DateTime(vo.getInactiveYear(), vo.getInactiveMonth(), vo.getInactiveDay(),
-                        vo.getInactiveHour(), vo.getInactiveMinute(), vo.getInactiveSecond(), 0);
-            return new OneTimeTrigger(new Date(dt.getMillis()));
-        }
+    public String createCronTimerExpression(boolean activeTrigger) {
 
         int month = vo.getActiveMonth();
         int day = vo.getActiveDay();
@@ -195,9 +171,41 @@ public class ScheduledEventRT extends SimpleEventDetector implements ModelTimeou
             }
         }
 
+        return expression.toString();
+    };
+
+    public TimerTrigger createTrigger(boolean activeTrigger) {
+        if (!activeTrigger && !vo.isReturnToNormal())
+            return null;
+
+        if (vo.getScheduleType() == ScheduledEventVO.TYPE_CRON) {
+            try {
+                if (activeTrigger)
+                    return new CronTimerTrigger(vo.getActiveCron());
+                return new CronTimerTrigger(vo.getInactiveCron());
+            }
+            catch (ParseException e) {
+                // Should never happen, so wrap and rethrow
+                throw new ShouldNeverHappenException(e);
+            }
+        }
+
+        if (vo.getScheduleType() == ScheduledEventVO.TYPE_ONCE) {
+            DateTime dt;
+            if (activeTrigger)
+                dt = new DateTime(vo.getActiveYear(), vo.getActiveMonth(), vo.getActiveDay(), vo.getActiveHour(),
+                        vo.getActiveMinute(), vo.getActiveSecond(), 0);
+            else
+                dt = new DateTime(vo.getInactiveYear(), vo.getInactiveMonth(), vo.getInactiveDay(),
+                        vo.getInactiveHour(), vo.getInactiveMinute(), vo.getInactiveSecond(), 0);
+            return new OneTimeTrigger(new Date(dt.getMillis()));
+        }
+
+        String expression = createCronTimerExpression(activeTrigger);
+
         CronTimerTrigger cronTrigger;
         try {
-            cronTrigger = new CronTimerTrigger(expression.toString());
+            cronTrigger = new CronTimerTrigger(expression);
         }
         catch (ParseException e) {
             // Should never happen, so wrap and rethrow
